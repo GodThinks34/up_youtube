@@ -1,0 +1,37 @@
+name: Upload to YouTube
+
+# 触发条件：接收来自 Cloudflare 的信号
+on:
+  repository_dispatch:
+    types: [on_video_ready]
+
+jobs:
+  build_and_upload:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1. 把你的代码从仓库拉取到 GitHub 的虚拟电脑上
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. 安装 Python 环境
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      # 3. 根据 requirements.txt 安装工具插件
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      # 4. 运行上传脚本，并注入你存在 Secrets 里的那些钥匙
+      - name: Run upload script
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          YOUTUBE_REFRESH_TOKEN_B: ${{ secrets.YOUTUBE_REFRESH_TOKEN_B }}
+          YOUTUBE_REFRESH_TOKEN_C: ${{ secrets.YOUTUBE_REFRESH_TOKEN_C }}
+          VIDEO_URL: ${{ github.event.client_payload.video_url }} # 接收从 CF 传来的链接
+        run: python upload_to_yt.py
