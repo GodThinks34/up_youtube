@@ -1,31 +1,31 @@
-name: Upload to YouTube
+name: 🚀 一键发布 YouTube (手动点火版)
 
-# 触发条件：接收来自 Cloudflare 的信号
+# 触发条件：允许在 GitHub 网页上手动点击运行
 on:
-  repository_dispatch:
-    types: [on_video_ready]
+  workflow_dispatch:
+    inputs:
+      video_filename:
+        description: '🎬 请输入刚才传到 R2 的视频全名 (例如: 本期排行榜.mp4)'
+        required: true
+        type: string
 
 jobs:
   build_and_upload:
     runs-on: ubuntu-latest
     
     steps:
-      # 1. 把你的代码从仓库拉取到 GitHub 的虚拟电脑上
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. 安装 Python 环境
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      # 3. 根据 requirements.txt 安装工具插件
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
 
-      # 4. 运行上传脚本，并注入你存在 Secrets 里的那些钥匙
       - name: Run upload script
         env:
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
@@ -33,5 +33,9 @@ jobs:
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
           YOUTUBE_REFRESH_TOKEN_B: ${{ secrets.YOUTUBE_REFRESH_TOKEN_B }}
           YOUTUBE_REFRESH_TOKEN_C: ${{ secrets.YOUTUBE_REFRESH_TOKEN_C }}
-          VIDEO_URL: ${{ github.event.client_payload.video_url }} # 接收从 CF 传来的链接
+          
+          # 👇 核心：拼接完整的 R2 下载链接！
+          # 教程注意：让观众把下面域名替换成他们自己的 R2 公共域名 (pub-xxx.r2.dev)
+          VIDEO_URL: "https://自己的公共域名.r2.dev/${{ github.event.inputs.video_filename }}"
+          
         run: python upload_to_yt.py
